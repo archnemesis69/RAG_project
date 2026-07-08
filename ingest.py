@@ -1,10 +1,9 @@
-from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings
-
 def ingest(file_name:str):
-    loader = DirectoryLoader('data',glob="*.pdf",loader_cls=PyPDFLoader)
+    loader = PyPDFLoader(file_name)
     docs=loader.load()
     print(len(docs))
     print(docs[0].metadata)

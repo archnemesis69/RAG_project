@@ -21,7 +21,7 @@ def get_unique_union(documents):
     return [loads(doc) for doc in unique_docs]
 
 
-def retrieve(query):
+def retrieve(query,top_k=5):
     # Prompt for generating multiple search queries
     template = """
 You are an AI language model assistant.
@@ -68,7 +68,7 @@ Original question:
     )
 
     retriever = vectorstore.as_retriever(
-        search_kwargs={"k": 5}
+        search_kwargs={"k": top_k}
     )
 
     # Retrieve documents for every generated query
