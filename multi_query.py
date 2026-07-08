@@ -39,7 +39,7 @@ Original question:
 
     # Local LLM
     llm = ChatOllama(
-        model="llama3"      # Change to your Ollama chat model
+        model="hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF"      # Change to your Ollama chat model
     )
 
     # Generate alternative queries
