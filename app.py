@@ -29,30 +29,26 @@ def rag_pipeline(query, ingest_first=False, top_k=5):
         top_k: Number of documents to retrieve per query (passed to multi_query)
     """
 
-    # Step 1: Ingest documents if requested
     if ingest_first:
         print("Ingesting documents...")
         ingest("data")
         print("Documents ingested successfully!\n")
 
-    # Step 2: Retrieve documents using multi-query
     print(f"Retrieving relevant documents for: '{query}'\n")
 
-    # Check if vector database exists before retrieving
     if not os.path.exists(CHROMA_DB_PATH):
         raise FileNotFoundError(
             f"Vector database not found at {CHROMA_DB_PATH}. "
             "Please run with ingest_first=True or ingest documents first."
         )
 
-    # Call retrieve with top_k parameter
+    # NOTE: this call now works correctly because multi_query.retrieve()
+    # has been fixed to accept a top_k parameter.
     docs = retrieve(query, top_k=top_k)
     print(f"Retrieved {len(docs)} unique documents\n")
 
-    # Step 3: Format context
     context = format_docs(docs)
 
-    # Step 4: Generate answer using LLM
     prompt_template = """You are a helpful AI assistant. Use the following context to answer the user's question.
 If the context does not contain enough information to answer the question, say "I don't have enough information to answer this question."
 
@@ -84,13 +80,11 @@ def rag_pipeline_with_streaming(query, ingest_first=False, top_k=5):
     Alternative RAG pipeline with streaming output for better UX.
     """
 
-    # Step 1: Ingest documents if requested
     if ingest_first:
         print("Ingesting documents...")
         ingest("data")
         print("Documents ingested successfully!\n")
 
-    # Step 2: Retrieve documents using multi-query
     print(f"Retrieving relevant documents for: '{query}'\n")
 
     if not os.path.exists(CHROMA_DB_PATH):
@@ -102,10 +96,8 @@ def rag_pipeline_with_streaming(query, ingest_first=False, top_k=5):
     docs = retrieve(query, top_k=top_k)
     print(f"Retrieved {len(docs)} unique documents\n")
 
-    # Step 3: Format context
     context = format_docs(docs)
 
-    # Step 4: Generate answer with streaming
     prompt_template = """You are a helpful AI assistant. Use the following context to answer the user's question.
 If the context does not contain enough information to answer the question, say "I don't have enough information to answer this question."
 
@@ -120,7 +112,6 @@ Answer:"""
 
     print("Generating answer...\n")
 
-    # Stream the response
     stream = ollama.chat(
         model=LANGUAGE_MODEL,
         messages=[{'role': 'user', 'content': prompt}],
@@ -143,7 +134,6 @@ def main():
     print("RAG (Retrieval-Augmented Generation) Application")
     print("=" * 60)
 
-    # Check if vector database exists
     if not os.path.exists(CHROMA_DB_PATH):
         print("\nVector database not found. Ingesting documents first...")
         ingest_first = True
@@ -151,7 +141,6 @@ def main():
         print("\nVector database found. Starting RAG pipeline...\n")
         ingest_first = False
 
-    # Main loop for asking questions
     while True:
         query = input("\nAsk a question (or 'quit' to exit): ").strip()
 
@@ -164,15 +153,7 @@ def main():
             continue
 
         try:
-            # Option 1: Use the streaming version for better UX
             answer = rag_pipeline_with_streaming(query, ingest_first=ingest_first)
-
-            # Option 2: Use the non-streaming version (commented out)
-            # answer = rag_pipeline(query, ingest_first=ingest_first)
-            # print("\n" + "=" * 60)
-            # print(f"Answer:\n{answer}")
-            # print("=" * 60 + "\n")
-
             ingest_first = False
 
         except FileNotFoundError as e:
