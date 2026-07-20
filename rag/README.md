@@ -153,7 +153,6 @@ Edit these variables in the respective files to customize:
 
 ## Future Enhancements
 
-- [ ] Web interface with Streamlit
 - [ ] Support for more document formats (DOCX, TXT, etc.)
 - [ ] Caching for faster queries
 - [ ] Multi-language support
@@ -163,7 +162,3 @@ Edit these variables in the respective files to customize:
 ## License
 
 MIT
-
-## Author
-
-Created with ❤️ for RAG applications

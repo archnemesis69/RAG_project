@@ -7,7 +7,7 @@ from langchain_community.vectorstores import Chroma
 
 LANGUAGE_MODEL = 'hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF'
 EMBEDDING_MODEL = 'hf.co/CompendiumLabs/bge-base-en-v1.5-gguf'
-CHROMA_DB_PATH = "./chroma_db"
+CHROMA_DB_PATH = "../chroma_db"
 
 
 def get_unique_union(documents):

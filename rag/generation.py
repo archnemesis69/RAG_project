@@ -1,5 +1,9 @@
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitters import RecursiveCharacterTextSplitter
+# FIX: module is singular `langchain.text_splitter`, not
+# `langchain.text_splitters` (plural). The plural form doesn't exist in
+# this package and raised ModuleNotFoundError on import. Matches the
+# import already used correctly in ingest.py.
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_core.output_parsers import StrOutputParser

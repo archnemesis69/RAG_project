@@ -12,7 +12,7 @@ from langchain_core.runnables import RunnablePassthrough
 
 class RAGService:
     def __init__(self):
-        self.chroma_db_path = "./chroma_db"
+        self.chroma_db_path = "../chroma_db"
 
         self.language_model = "hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF"
 
@@ -105,7 +105,7 @@ Answer:
 
         if ingest_first:
             print("Ingesting documents...")
-            ingest("data")
+            ingest("../data")
             print("Documents ingested.\n")
 
         docs, context = self.retrieve_context(
