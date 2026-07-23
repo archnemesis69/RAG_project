@@ -10,7 +10,7 @@ from langchain_community.document_loaders import (
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_ollama import OllamaEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 
 EMBEDDING_MODEL = 'hf.co/CompendiumLabs/bge-base-en-v1.5-gguf'
 CHROMA_DB_PATH = "../chroma_db"
