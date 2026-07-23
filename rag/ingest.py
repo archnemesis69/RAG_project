@@ -15,12 +15,16 @@ from langchain_ollama import OllamaEmbeddings
 EMBEDDING_MODEL = 'hf.co/CompendiumLabs/bge-base-en-v1.5-gguf'
 CHROMA_DB_PATH = "../chroma_db"
 
-# NEW: tracks which files have been ingested (filename -> content hash +
-# chunk count) so re-running ingest() never duplicates work or data.
+# manifest.json is now a nested dict: { owner_id: { filename: {hash, chunks} } }
+# instead of a flat { filename: {...} }. A flat manifest meant two
+# different users uploading a file with the same name collided in the
+# same slot -> whichever uploaded second would either get skipped as
+# "unchanged" (if hashes happened to match) or silently delete/replace
+# the other user's chunks. Nesting by owner_id makes filenames unique
+# only *within* a user's own documents, which is what "ses documents"
+# (section 2.1) actually implies.
 MANIFEST_PATH = os.path.join(CHROMA_DB_PATH, "manifest.json")
 
-# NEW: per the cahier des charges (section 1.3 / 2.1), the system must
-# accept PDF, DOCX, and TXT — the old version only globbed "*.pdf".
 SUPPORTED_LOADERS = {
     ".pdf": PyPDFLoader,
     ".docx": Docx2txtLoader,
@@ -29,7 +33,6 @@ SUPPORTED_LOADERS = {
 
 
 def _get_vectorstore() -> Chroma:
-    """Open (or create) the persisted Chroma store for read/write."""
     return Chroma(
         persist_directory=CHROMA_DB_PATH,
         embedding_function=OllamaEmbeddings(model=EMBEDDING_MODEL),
@@ -50,12 +53,20 @@ def _save_manifest(manifest: dict) -> None:
 
 
 def _file_hash(file_path: str) -> str:
-    """SHA-256 of the file's bytes, used to detect changed content."""
     h = hashlib.sha256()
     with open(file_path, "rb") as f:
         for block in iter(lambda: f.read(8192), b""):
             h.update(block)
     return h.hexdigest()
+
+
+def _owner_filter(filename: str, owner_id: str) -> dict:
+    """
+    Chroma 'where' filter scoping a query/delete to one owner's copy of
+    one filename. Using $and explicitly rather than a flat two-key dict,
+    since some Chroma versions require it for multi-condition filters.
+    """
+    return {"$and": [{"source": filename}, {"owner_id": owner_id}]}
 
 
 def _load_document(file_path: str):
@@ -70,31 +81,32 @@ def _load_document(file_path: str):
     return loader.load()
 
 
-def ingest_file(file_path: str, force: bool = False) -> dict:
+def ingest_file(file_path: str, owner_id: str = "default", force: bool = False) -> dict:
     """
-    Ingest a single PDF/DOCX/TXT file into the vector store.
+    Ingest a single PDF/DOCX/TXT file into the vector store, scoped to
+    owner_id. Every chunk gets metadata:
+      - source: the filename (used for citations and per-owner delete)
+      - owner_id: whose document this is (used to filter retrieval)
 
-    - Skips the file if its content hash matches what's already in the
-      manifest (i.e. it was already ingested and hasn't changed).
-    - If the file *has* changed since last time, its old chunks are
-      deleted first so re-ingesting never leaves duplicates behind.
-    - Every chunk gets metadata["source"] = filename, which is what
-      list_documents()/delete_document() and the /query citations key
-      off of.
+    Skips re-ingesting if this owner already ingested this exact
+    filename with unchanged content. If the content changed, the
+    owner's old chunks for that filename are deleted first.
     """
     filename = os.path.basename(file_path)
     file_hash = _file_hash(file_path)
 
     manifest = _load_manifest()
-    previous = manifest.get(filename)
+    owner_entries = manifest.get(owner_id, {})
+    previous = owner_entries.get(filename)
 
     if previous and previous["hash"] == file_hash and not force:
-        print(f"Skipping '{filename}' — already ingested and unchanged")
+        print(f"Skipping '{filename}' for owner '{owner_id}' — already ingested and unchanged")
         return {"filename": filename, "status": "skipped", "chunks": previous["chunks"]}
 
     docs = _load_document(file_path)
     for doc in docs:
         doc.metadata["source"] = filename
+        doc.metadata["owner_id"] = owner_id
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     splits = text_splitter.split_documents(docs)
@@ -102,24 +114,20 @@ def ingest_file(file_path: str, force: bool = False) -> dict:
     vectorstore = _get_vectorstore()
 
     if previous:
-        # Same filename ingested before with different content -> clear
-        # its old chunks before adding the new ones.
-        vectorstore.delete(where={"source": filename})
+        vectorstore.delete(where=_owner_filter(filename, owner_id))
 
     vectorstore.add_documents(splits)
 
-    manifest[filename] = {"hash": file_hash, "chunks": len(splits)}
+    owner_entries[filename] = {"hash": file_hash, "chunks": len(splits)}
+    manifest[owner_id] = owner_entries
     _save_manifest(manifest)
 
-    print(f"Ingested '{filename}': {len(splits)} chunk(s)")
+    print(f"Ingested '{filename}' for owner '{owner_id}': {len(splits)} chunk(s)")
     return {"filename": filename, "status": "ingested", "chunks": len(splits)}
 
 
-def ingest(folder_path: str = "data") -> list:
-    """
-    Ingest every supported file (PDF, DOCX, TXT) found directly inside
-    folder_path. Already-ingested, unchanged files are skipped.
-    """
+def ingest(folder_path: str = "data", owner_id: str = "default") -> list:
+    """Ingest every supported file directly inside folder_path, scoped to owner_id."""
     if not os.path.isdir(folder_path):
         raise FileNotFoundError(f"Folder not found: '{folder_path}'")
 
@@ -134,7 +142,7 @@ def ingest(folder_path: str = "data") -> list:
             f"No supported files (PDF, DOCX, TXT) found in '{folder_path}'."
         )
 
-    results = [ingest_file(f) for f in files]
+    results = [ingest_file(f, owner_id=owner_id) for f in files]
 
     ingested = sum(1 for r in results if r["status"] == "ingested")
     skipped = sum(1 for r in results if r["status"] == "skipped")
@@ -143,28 +151,32 @@ def ingest(folder_path: str = "data") -> list:
     return results
 
 
-def list_documents() -> list:
-    """Filenames currently in the index, with their chunk counts."""
+def list_documents(owner_id: str = "default") -> list:
+    """Filenames this owner has indexed, with chunk counts."""
     manifest = _load_manifest()
+    owner_entries = manifest.get(owner_id, {})
     return [
         {"filename": name, "chunks": info["chunks"]}
-        for name, info in sorted(manifest.items())
+        for name, info in sorted(owner_entries.items())
     ]
 
 
-def delete_document(filename: str) -> dict:
-    """Remove all chunks belonging to `filename` from the vector store."""
+def delete_document(filename: str, owner_id: str = "default") -> dict:
+    """Remove one owner's chunks for `filename`. Never touches another owner's copy."""
     manifest = _load_manifest()
-    if filename not in manifest:
-        raise FileNotFoundError(f"'{filename}' was not found in the index.")
+    owner_entries = manifest.get(owner_id, {})
+
+    if filename not in owner_entries:
+        raise FileNotFoundError(f"'{filename}' was not found in the index for this owner.")
 
     vectorstore = _get_vectorstore()
-    vectorstore.delete(where={"source": filename})
+    vectorstore.delete(where=_owner_filter(filename, owner_id))
 
-    del manifest[filename]
+    del owner_entries[filename]
+    manifest[owner_id] = owner_entries
     _save_manifest(manifest)
 
-    print(f"Deleted '{filename}' from the index")
+    print(f"Deleted '{filename}' for owner '{owner_id}'")
     return {"filename": filename, "status": "deleted"}
 
 

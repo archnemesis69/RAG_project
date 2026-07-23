@@ -38,7 +38,7 @@ Answer:
     def format_docs(self, docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
-    def retrieve_context(self, query, top_k=5):
+    def retrieve_context(self, query, top_k=5, owner_id="default"):
 
         if not os.path.exists(self.chroma_db_path):
             raise FileNotFoundError(
@@ -46,7 +46,9 @@ Answer:
                 "Please ingest documents first."
             )
 
-        docs = retrieve(query, top_k=top_k)
+        # FIX: owner_id now passed through so retrieval only ever
+        # searches this owner's own documents.
+        docs = retrieve(query, top_k=top_k, owner_id=owner_id)
 
         context = self.format_docs(docs)
 
@@ -101,16 +103,18 @@ Answer:
         top_k=5,
         stream=False,
         ingest_first=False,
+        owner_id="default",
     ):
 
         if ingest_first:
             print("Ingesting documents...")
-            ingest("../data")
+            ingest("../data", owner_id=owner_id)
             print("Documents ingested.\n")
 
         docs, context = self.retrieve_context(
             query=query,
             top_k=top_k,
+            owner_id=owner_id,
         )
 
         if stream:
@@ -122,5 +126,3 @@ Answer:
             "answer": answer,
             "documents": docs,
         }
-
-

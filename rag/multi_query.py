@@ -21,14 +21,16 @@ def get_unique_union(documents):
     return [loads(doc) for doc in unique_docs]
 
 
-def retrieve(query, top_k: int = 5):
+def retrieve(query, top_k: int = 5, owner_id: str = "default"):
     """
     Multi-query retrieval: generate 5 rephrasings of `query`, retrieve
     top_k docs for each, and return the deduplicated union.
 
-    FIX: top_k parameter added — app.py already called retrieve(query,
-    top_k=top_k), which crashed with TypeError since this function
-    previously only accepted `query`.
+    FIX: retrieval is now scoped to owner_id via a Chroma metadata
+    filter. Previously every retrieval searched the entire shared
+    index, so any user's question could surface any other user's
+    document chunks. Every chunk was tagged with owner_id at ingest
+    time (see ingest.py); this is the other half of that fix.
     """
     template = """
 You are an AI language model assistant.
@@ -43,8 +45,6 @@ Original question:
 """
     prompt = ChatPromptTemplate.from_template(template)
 
-    # FIX: use the shared LANGUAGE_MODEL constant instead of a hardcoded,
-    # possibly-not-installed "llama3" model.
     llm = ChatOllama(model=LANGUAGE_MODEL)
 
     generate_queries = (
@@ -67,7 +67,9 @@ Original question:
         embedding_function=embeddings,
     )
 
-    retriever = vectorstore.as_retriever(search_kwargs={"k": top_k})
+    retriever = vectorstore.as_retriever(
+        search_kwargs={"k": top_k, "filter": {"owner_id": owner_id}}
+    )
 
     all_docs = [retriever.invoke(q) for q in queries]
 

@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/rag_assistant
+    username: rag_user
+    password: rag_password
+  jpa:
+    hibernate:
+      # "update" is fine for the stage; switch to a proper migration
+      # tool (Flyway/Liquibase) before this ever sees production data.
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+
+app:
+  jwt:
+    # NEVER commit a real secret. Override this via the JWT_SECRET env
+    # var (see application-example below / .env in Docker Compose).
+    secret: "${JWT_SECRET:change-this-to-a-long-random-secret-please}"
+    expiration-ms: 86400000 # 24h
+  ai-service:
+    base-url: "${AI_SERVICE_URL:http://localhost:8000}"
