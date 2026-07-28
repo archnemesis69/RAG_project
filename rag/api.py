@@ -12,7 +12,7 @@ app = FastAPI()
 
 rag_service = RAGService()
 
-DATA_DIR = "../data"
+DATA_DIR = os.environ.get("DATA_DIR", "../data")
 
 
 class QueryRequest(BaseModel):

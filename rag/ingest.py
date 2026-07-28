@@ -35,7 +35,7 @@ SUPPORTED_LOADERS = {
 def _get_vectorstore() -> Chroma:
     return Chroma(
         persist_directory=CHROMA_DB_PATH,
-        embedding_function=OllamaEmbeddings(model=EMBEDDING_MODEL),
+        embedding_function=OllamaEmbeddings(model=EMBEDDING_MODEL, base_url=os.environ.get("OLLAMA_HOST", "http://localhost:11434")),
     )
 
 
@@ -108,7 +108,7 @@ def ingest_file(file_path: str, owner_id: str = "default", force: bool = False) 
         doc.metadata["source"] = filename
         doc.metadata["owner_id"] = owner_id
 
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     splits = text_splitter.split_documents(docs)
 
     vectorstore = _get_vectorstore()

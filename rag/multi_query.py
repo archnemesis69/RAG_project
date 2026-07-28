@@ -46,7 +46,7 @@ Original question:
 """
     prompt = ChatPromptTemplate.from_template(template)
 
-    llm = ChatOllama(model=LANGUAGE_MODEL)
+    llm = ChatOllama(model=LANGUAGE_MODEL, base_url=os.environ.get("OLLAMA_HOST", "http://localhost:11434"))
 
     generate_queries = (
             prompt
@@ -61,7 +61,7 @@ Original question:
     for q in queries:
         print("-", q)
 
-    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
+    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL, base_url=os.environ.get("OLLAMA_HOST", "http://localhost:11434"))
 
     vectorstore = Chroma(
         persist_directory=CHROMA_DB_PATH,
