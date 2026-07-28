@@ -5,7 +5,7 @@ from langchain_community.document_loaders import PyPDFLoader
 # import already used correctly in ingest.py.
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_ollama import OllamaEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.load import dumps, loads
@@ -42,7 +42,7 @@ def retrieve_with_multi_query(query: str, vectorstore, top_k: int = 5):
     rephrasings of the query and retrieves+dedupes across all of them,
     same pattern as multi_query.py.
     """
-    from langchain_ollama import ChatOllama
+    from langchain_community.chat_models import ChatOllama
 
     template = """You are an AI language model assistant.
 Your task is to generate five different versions of the given user question
