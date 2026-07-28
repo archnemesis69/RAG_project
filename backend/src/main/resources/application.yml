@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/rag_assistant
-    username: rag_user
-    password: rag_password
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/rag_assistant}"
+    username: "${SPRING_DATASOURCE_USERNAME:rag_user}"
+    password: "${SPRING_DATASOURCE_PASSWORD:rag_password}"
   jpa:
     hibernate:
       # "update" is fine for the stage; switch to a proper migration
@@ -17,8 +17,8 @@ spring:
         format_sql: true
   servlet:
     multipart:
-      max-file-size: 25MB
-      max-request-size: 25MB
+      max-file-size: 100MB
+      max-request-size: 100MB
 
 app:
   jwt:
