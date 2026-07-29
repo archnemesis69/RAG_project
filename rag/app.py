@@ -12,11 +12,13 @@ from langchain_core.runnables import RunnablePassthrough
 
 class RAGService:
     def __init__(self):
-        self.chroma_db_path = "../chroma_db"
+        self.chroma_db_path = os.environ.get("CHROMA_DB_PATH", "/app/chroma_db")
+        self.data_dir = os.environ.get("DATA_DIR", "/app/data")
+        self.ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
         self.language_model = "hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF"
 
-        self.llm = ChatOllama(model=self.language_model)
+        self.llm = ChatOllama(model=self.language_model, base_url=self.ollama_host)
 
         self.prompt = ChatPromptTemplate.from_template("""
 You are a helpful AI assistant.
@@ -108,7 +110,7 @@ Answer:
 
         if ingest_first:
             print("Ingesting documents...")
-            ingest("../data", owner_id=owner_id)
+            ingest(self.data_dir, owner_id=owner_id)
             print("Documents ingested.\n")
 
         docs, context = self.retrieve_context(

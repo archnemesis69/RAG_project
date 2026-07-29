@@ -13,7 +13,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import OllamaEmbeddings
 
 EMBEDDING_MODEL = 'hf.co/CompendiumLabs/bge-base-en-v1.5-gguf'
-CHROMA_DB_PATH = "../chroma_db"
+CHROMA_DB_PATH = os.environ.get("CHROMA_DB_PATH", "/app/chroma_db")
 
 # manifest.json is now a nested dict: { owner_id: { filename: {hash, chunks} } }
 # instead of a flat { filename: {...} }. A flat manifest meant two
