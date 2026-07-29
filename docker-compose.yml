@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rag-postgres
+    environment:
+      - POSTGRES_DB=rag_assistant
+      - POSTGRES_USER=rag_user
+      - POSTGRES_PASSWORD=rag_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag_user -d rag_assistant"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   rag-fastapi:
     build: ./rag
     container_name: rag-fastapi
@@ -7,6 +25,7 @@ services:
     environment:
       - OLLAMA_HOST=http://host.docker.internal:11434
       - DATA_DIR=/app/data
+      - CHROMA_DB_PATH=/app/chroma_db
     volumes:
       - ./data:/app/data
       - ./chroma_db:/app/chroma_db
@@ -20,23 +39,30 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/rag_assistant
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rag_assistant
       - SPRING_DATASOURCE_USERNAME=rag_user
       - SPRING_DATASOURCE_PASSWORD=rag_password
       - AI_SERVICE_URL=http://rag-fastapi:8000
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      - rag-fastapi
+      postgres:
+        condition: service_healthy
+      rag-fastapi:
+        condition: service_started
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:8080/api
     container_name: rag-frontend
     ports:
       - "3000:80"
-    environment:
-      - VITE_API_BASE_URL=http://localhost:8080
     depends_on:
       - rag-backend
     restart: unless-stopped
+
+volumes:
+  postgres_data:
