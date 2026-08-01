@@ -29,7 +29,7 @@ export function DashboardPage() {
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <p className="dashboard-wordmark">Marginal</p>
+        <span className="brand-mark" aria-hidden="true">¶</span>
         <div className="dashboard-account">
           <span>{email}</span>
           <button type="button" className="btn-ghost" onClick={logout}>

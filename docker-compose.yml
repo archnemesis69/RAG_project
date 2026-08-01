@@ -7,7 +7,7 @@ services:
       - POSTGRES_USER=rag_user
       - POSTGRES_PASSWORD=rag_password
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -29,6 +29,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./chroma_db:/app/chroma_db
+      - ./.cursor:/app/.cursor
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -43,6 +44,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=rag_user
       - SPRING_DATASOURCE_PASSWORD=rag_password
       - AI_SERVICE_URL=http://rag-fastapi:8000
+    volumes:
+      - ./.cursor:/app/.cursor
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

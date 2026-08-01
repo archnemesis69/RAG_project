@@ -36,6 +36,9 @@ public class DocumentEntity {
 
     private Integer chunkCount;
 
+    @Column(length = 2000)
+    private String errorMessage;
+
     @Column(nullable = false, updatable = false)
     private Instant uploadedAt;
 

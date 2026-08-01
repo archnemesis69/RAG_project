@@ -27,7 +27,7 @@ public class WebClientConfig {
     public WebClient aiServiceWebClient(WebClient.Builder builder) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5_000)
-                .responseTimeout(Duration.ofSeconds(30));
+                .responseTimeout(Duration.ofSeconds(600));
 
         return builder
                 .baseUrl(aiServiceBaseUrl)

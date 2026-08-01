@@ -32,7 +32,7 @@ export function ChatPanel({ hasReadyDocuments }: Props) {
         ...prev,
         { id: nextId(), role: "assistant", content: result.answer, sources: result.sources },
       ]);
-    } catch {
+    } catch (err) {
       setMessages((prev) => [
         ...prev,
         {

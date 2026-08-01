@@ -38,6 +38,20 @@ def health():
 
 @app.post("/query", response_model=QueryResponse)
 def query(request: QueryRequest):
+    # #region agent log
+    import json, time, urllib.request
+    _log_path = "/app/.cursor/debug-a5752a.log"
+    _ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+    _ollama_ok = False
+    _ollama_err = None
+    try:
+        urllib.request.urlopen(f"{_ollama_host.rstrip('/')}/", timeout=3)
+        _ollama_ok = True
+    except Exception as _e:
+        _ollama_err = str(_e)
+    with open(_log_path, "a") as _f:
+        _f.write(json.dumps({"sessionId": "a5752a", "hypothesisId": "A,B,C", "location": "api.py:query", "message": "query entry ollama probe", "data": {"ollama_host": _ollama_host, "ollama_reachable": _ollama_ok, "ollama_error": _ollama_err, "owner_id": request.owner_id, "question_len": len(request.question)}, "timestamp": int(time.time() * 1000), "runId": "pre-fix"}) + "\n")
+    # #endregion
     try:
         result = rag_service.answer(
             request.question,
@@ -48,10 +62,18 @@ def query(request: QueryRequest):
             {"source": doc.metadata.get("source"), "page": doc.metadata.get("page")}
             for doc in result["documents"]
         ]
+        # #region agent log
+        with open(_log_path, "a") as _f:
+            _f.write(json.dumps({"sessionId": "a5752a", "hypothesisId": "A", "location": "api.py:query", "message": "query success", "data": {"answer_len": len(result["answer"]), "source_count": len(sources)}, "timestamp": int(time.time() * 1000), "runId": "pre-fix"}) + "\n")
+        # #endregion
         return QueryResponse(answer=result["answer"], sources=sources)
     except FileNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        # #region agent log
+        with open(_log_path, "a") as _f:
+            _f.write(json.dumps({"sessionId": "a5752a", "hypothesisId": "A,B,C,D", "location": "api.py:query", "message": "query failed", "data": {"error_type": type(e).__name__, "error": str(e)}, "timestamp": int(time.time() * 1000), "runId": "pre-fix"}) + "\n")
+        # #endregion
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -94,7 +116,26 @@ async def upload_document(file: UploadFile = File(...), owner_id: str = Form("de
         with open(dest_path, "wb") as out_file:
             shutil.copyfileobj(file.file, out_file)
 
-        return ingest_file(dest_path, owner_id=owner_id)
+        # #region agent log
+        import json, time, urllib.request
+        _log_path = "/app/.cursor/debug-a5752a.log"
+        _ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+        _ollama_ok = False
+        _ollama_err = None
+        try:
+            urllib.request.urlopen(f"{_ollama_host.rstrip('/')}/", timeout=3)
+            _ollama_ok = True
+        except Exception as _e:
+            _ollama_err = str(_e)
+        with open(_log_path, "a") as _f:
+            _f.write(json.dumps({"sessionId": "a5752a", "hypothesisId": "D", "location": "api.py:upload", "message": "upload before ingest ollama probe", "data": {"ollama_host": _ollama_host, "ollama_reachable": _ollama_ok, "ollama_error": _ollama_err, "owner_id": owner_id, "filename": file.filename}, "timestamp": int(time.time() * 1000), "runId": "pre-fix"}) + "\n")
+        # #endregion
+        result = ingest_file(dest_path, owner_id=owner_id)
+        # #region agent log
+        with open(_log_path, "a") as _f:
+            _f.write(json.dumps({"sessionId": "a5752a", "hypothesisId": "D", "location": "api.py:upload", "message": "upload ingest result", "data": result, "timestamp": int(time.time() * 1000), "runId": "pre-fix"}) + "\n")
+        # #endregion
+        return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

@@ -5,6 +5,7 @@ export interface DocumentItem {
   filename: string;
   status: DocumentStatus;
   chunkCount: number | null;
+  errorMessage: string | null;
   uploadedAt: string;
 }
 

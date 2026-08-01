@@ -10,5 +10,6 @@ public record DocumentResponse(
         String filename,
         DocumentStatus status,
         Integer chunkCount,
+        String errorMessage,
         Instant uploadedAt
 ) {}

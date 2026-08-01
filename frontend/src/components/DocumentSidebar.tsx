@@ -73,6 +73,13 @@ export function DocumentSidebar({ documents, isLoading, onDocumentsChanged }: Pr
                 <span className="document-filename">{doc.filename}</span>
                 <span className="document-sub">
                   <StatusBadge status={doc.status} />
+                  {doc.status === "FAILED" && doc.errorMessage && (
+                    <span className="document-error" title={doc.errorMessage}>
+                      {doc.errorMessage.length > 60
+                        ? doc.errorMessage.substring(0, 60) + "…"
+                        : doc.errorMessage}
+                    </span>
+                  )}
                   {doc.chunkCount != null && (
                     <span className="document-chunks">{doc.chunkCount} chunks</span>
                   )}

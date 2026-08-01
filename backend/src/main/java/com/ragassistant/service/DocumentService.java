@@ -7,6 +7,7 @@ import com.ragassistant.entity.User;
 import com.ragassistant.exception.ResourceNotFoundException;
 import com.ragassistant.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DocumentService {
@@ -51,7 +53,16 @@ public class DocumentService {
             document.setChunkCount(chunks != null ? Integer.parseInt(chunks.toString()) : 0);
             document.setStatus(DocumentStatus.READY);
         } catch (IOException | RuntimeException e) {
+            String errorMessage = e.getMessage();
+            if (e instanceof org.springframework.web.reactive.function.client.WebClientResponseException wcre) {
+                errorMessage = wcre.getResponseBodyAsString();
+            }
+            if (errorMessage == null || errorMessage.isBlank()) {
+                errorMessage = "Failed due to " + e.getClass().getSimpleName();
+            }
+            log.error("Document ingestion failed for '{}': {}", filename, errorMessage, e);
             document.setStatus(DocumentStatus.FAILED);
+            document.setErrorMessage(errorMessage);
         }
 
         document = documentRepository.save(document);
@@ -81,6 +92,7 @@ public class DocumentService {
                 document.getFilename(),
                 document.getStatus(),
                 document.getChunkCount(),
+                document.getErrorMessage(),
                 document.getUploadedAt()
         );
     }

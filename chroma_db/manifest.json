@@ -4,5 +4,17 @@
       "hash": "130fe5f44268db12b9b876c5b17707ea72408931242aed0022e9738e8ee40781",
       "chunks": 376
     }
+  },
+  "default": {
+    "1.pdf": {
+      "hash": "130fe5f44268db12b9b876c5b17707ea72408931242aed0022e9738e8ee40781",
+      "chunks": 642
+    }
+  },
+  "0b67f3a5-863b-4d1e-8616-c8970c288c5a": {
+    "Modern Java in Action, 2nd Edition.pdf": {
+      "hash": "240a139d46b25934d1247b4067beaa8773515e697e1234f3c96ef7b4f0f4611a",
+      "chunks": 3041
+    }
   }
 }

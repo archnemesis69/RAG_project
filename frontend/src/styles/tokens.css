@@ -1,31 +1,36 @@
 :root {
-  /* Color */
-  --bg: #f6f5f0;
-  --surface: #ffffff;
-  --ink: #1e2a32;
-  --ink-soft: #55636b;
-  --ink-faint: #93998f;
-  --line: #dad6c9;
+  /* Color - Premium Dark Mode */
+  --bg: #09090b;
+  --bg-gradient: radial-gradient(circle at top right, #1e1e28, #09090b);
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --surface-solid: #18181b;
+  --ink: #fafafa;
+  --ink-soft: #a1a1aa;
+  --ink-faint: #52525b;
+  --line: rgba(255, 255, 255, 0.1);
 
-  --accent: #2f5d50;
-  --accent-soft: #e3ece7;
-  --accent-strong: #234840;
+  /* Accents */
+  --accent: #10b981;
+  --accent-soft: rgba(16, 185, 129, 0.15);
+  --accent-strong: #059669;
 
-  --amber: #b8863b;
-  --amber-soft: #f5ebda;
+  --amber: #f59e0b;
+  --amber-soft: rgba(245, 158, 11, 0.15);
 
-  --danger: #a23b32;
-  --danger-soft: #f5e4e1;
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.15);
 
   /* Type */
-  --font-display: "Fraunces", Georgia, serif;
+  --font-display: "Outfit", system-ui, sans-serif;
   --font-body: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
 
-  /* Layout */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 2px rgba(30, 42, 50, 0.06);
-  --shadow-md: 0 8px 24px rgba(30, 42, 50, 0.1);
+  /* Layout & Glassmorphism */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
+  --glass-blur: blur(16px);
 }

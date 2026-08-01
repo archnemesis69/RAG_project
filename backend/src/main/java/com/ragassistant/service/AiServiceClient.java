@@ -68,12 +68,33 @@ public class AiServiceClient {
                 "owner_id", ownerId
         );
 
-        return webClient.post()
-                .uri("/query")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(payload)
-                .retrieve()
-                .bodyToMono(QueryResponse.class)
-                .block();
+        // #region agent log
+        try (java.io.FileWriter fw = new java.io.FileWriter("/app/.cursor/debug-a5752a.log", true)) {
+            fw.write("{\"sessionId\":\"a5752a\",\"hypothesisId\":\"E\",\"location\":\"AiServiceClient.java:query\",\"message\":\"backend query start\",\"data\":{\"ownerId\":\"" + ownerId + "\",\"topK\":" + topK + ",\"questionLen\":" + question.length() + "},\"timestamp\":" + System.currentTimeMillis() + ",\"runId\":\"pre-fix\"}\n");
+        } catch (Exception ignored) {}
+        // #endregion
+
+        try {
+            QueryResponse response = webClient.post()
+                    .uri("/query")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(payload)
+                    .retrieve()
+                    .bodyToMono(QueryResponse.class)
+                    .block();
+            // #region agent log
+            try (java.io.FileWriter fw = new java.io.FileWriter("/app/.cursor/debug-a5752a.log", true)) {
+                fw.write("{\"sessionId\":\"a5752a\",\"hypothesisId\":\"E\",\"location\":\"AiServiceClient.java:query\",\"message\":\"backend query success\",\"data\":{\"answerLen\":" + (response.answer() != null ? response.answer().length() : 0) + "},\"timestamp\":" + System.currentTimeMillis() + ",\"runId\":\"pre-fix\"}\n");
+            } catch (Exception ignored) {}
+            // #endregion
+            return response;
+        } catch (Exception e) {
+            // #region agent log
+            try (java.io.FileWriter fw = new java.io.FileWriter("/app/.cursor/debug-a5752a.log", true)) {
+                fw.write("{\"sessionId\":\"a5752a\",\"hypothesisId\":\"E\",\"location\":\"AiServiceClient.java:query\",\"message\":\"backend query failed\",\"data\":{\"errorType\":\"" + e.getClass().getSimpleName() + "\",\"error\":\"" + e.getMessage().replace("\"", "'") + "\"},\"timestamp\":" + System.currentTimeMillis() + ",\"runId\":\"pre-fix\"}\n");
+            } catch (Exception ignored) {}
+            // #endregion
+            throw e;
+        }
     }
 }
